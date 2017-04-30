@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui, QtCore
+import sys
+
+if sys.version_info.major == 2:
+    from PyQt4 import QtGui, QtCore
+else:
+    from PyQt5 import QtGui, QtCore, QtWidgets
+
+
 from ebs import Component, GameManager, System
 from math import sqrt
 import random
@@ -24,8 +31,13 @@ class MoveComponent(Component):
 
 
 class DynamicRotationComponent(Component):
+
+    def __init__(self):
+        self.r = random.choice([-90, 90])
+        self.speed = random.randint(1, 3)
+
     def update(self, delta):
-        self.owner[MoveComponent].q *= QtGui.QQuaternion.fromAxisAndAngle(QtGui.QVector3D(0, 0, 1), 90 * delta)
+        self.owner[MoveComponent].q *= QtGui.QQuaternion.fromAxisAndAngle(QtGui.QVector3D(0, 0, 1), self.r * delta * self.speed)
 
 
 class LifeTimeComponent(Component):
@@ -50,6 +62,7 @@ class GunComponent(Component):
 
     def __init__(self):
         self.elapsed = 0
+        self.delay = random.random()
 
     def update(self, delta):
         self.elapsed += delta
@@ -114,7 +127,7 @@ class RenderSystem(System):
     component = [TankRenderComponent, BulletRenderComponent]
 
 
-class Window(QtGui.QWidget):
+class Window(QtGui.QWidget if sys.version_info.major == 2 else QtWidgets.QWidget):
     def __init__(self):
         super(Window, self).__init__()
         self.gm = GameManager()
@@ -136,8 +149,9 @@ class Window(QtGui.QWidget):
         self.fps += 1
         if self.last_tick - self.last_fps >= 1.:
             e_l_c = len(self.gm.e_list)
-            print "FPS:", self.fps, "Entities:", e_l_c, "Componentns", len(
-                self.gm.e_list[0].components) * e_l_c if self.gm.e_list else 0
+            fmt = "FPS: {}  Entities: {}  Components: {}"
+            print(fmt.format(self.fps, e_l_c, len(self.gm.e_list[0].components) * e_l_c if self.gm.e_list else 0))
+
             self.fps = 0
             self.last_fps = self.last_tick
 
@@ -164,7 +178,7 @@ class Window(QtGui.QWidget):
         gc.end()
 
 
-app = QtGui.QApplication([])
+app = QtGui.QApplication([]) if sys.version_info.major == 2 else QtWidgets.QApplication([])
 w = Window()
 w.resize(640, 480)
 w.show()
