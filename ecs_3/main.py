@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtGui, QtCore, QtWidgets
-from logic import *
-from ecs import *
 import time
+
+from PyQt5 import QtGui, QtCore, QtWidgets
+
+from ecs_3.logic import *
+from ecs_3.ecs import *
 
 
 class Window(QtWidgets.QWidget):
     def __init__(self):
         super(Window, self).__init__()
-        self.gm = GameManager()
+        self.gm = EntityManager()
         self.gm.add_system(MoveSystem())
         self.gm.add_system(LifeTimeSystem())
         self.fps = 0
@@ -35,29 +37,25 @@ class Window(QtWidgets.QWidget):
     def mouseMoveEvent(self, event):
         pos = event.pos()
 
-        for i in range(50):
+        for i in range(100):
             e = self.gm.create_entity()
 
-            pc = PositionComponent()
-            pc.x, pc.y = pos.x() + i * 5, pos.y()
-
-            vc = VelocityComponent()
-            vc.vx, pc.vy = 0, 1
+            pc = PositionComponent(x=pos.x() + i * 5, y=pos.y())
+            vc = VelocityComponent(x=0.0, y=1.0, speed=30)
+            lc = LifeTimeComponent(delay=5.0)
 
             self.gm.assign(e, pc)
             self.gm.assign(e, vc)
-
-            lc = LifeTimeComponent()
-            lc.delay = 10
             self.gm.assign(e, lc)
+
 
     def paintEvent(self, QPaintEvent):
         gc = QtGui.QPainter()
         gc.begin(self)
 
-        for e in self.gm.filter(Family.Position):
-            if e[PositionComponent].y < self.size().height():
-                gc.drawPoint(e[PositionComponent].x, e[PositionComponent].y)
+        for e, (p,) in self.gm.filter(Family.Position):
+            if p.y < self.size().height():
+                gc.drawPoint(p.x, p.y)
         # TODO: Render
 
         gc.end()

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ecs import System, Family, Component
+from ecs_2.ecs import System, Family, Component
 
 Family._fields_ += [
     "Position",

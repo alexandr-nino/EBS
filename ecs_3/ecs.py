@@ -74,8 +74,17 @@ class Pool(object):
                 c += 1
         return c
 
+    size = property(fget=__len__)
+    capacity = property(fget=lambda self: len(self.items))
+
     def __repr__(self):
         return "Pool({}, {})".format(self.cls.__name__, len(self))
+
+    def __getitem__(self, index: int):
+        return self.items[index]
+
+    def __setitem__(self, index: int, value):
+        self.items[index] = value
 
 
 class Component(Structure):
@@ -132,26 +141,26 @@ class EntityManager(object):
         if c.family not in self.components:
             self.components[c.family] = Pool(c.__class__)
         self.components[c.family].add(c)
-        self.entities.items[e.id].mask += c.family
-        self.entities.items[e.id].components[c.family.index] = c.id
+        self.entities[e.id].mask += c.family
+        self.entities[e.id].components[c.family.index] = c.id
 
     def get_component(self, entity, cls=None, family=None):
         if cls is not None:
             family = cls.family
         elif family is None:
             raise AttributeError("cls or family is required!")
-        ec = self.entities.items[entity.id].components
-        return self.components[family].items[ec[family.index]]
+        ec = self.entities[entity.id].components
+        return self.components[family][ec[family.index]]
 
     def get_all_components(self, entity):
-        ec = self.entities.items[entity.id].components
-        return [self.components[1 << index].items[ec[uid]]
+        ec = self.entities[entity.id].components
+        return [self.components[1 << index][uid]
                 for index, uid in enumerate(ec)
                 if uid != INVALID_ID
                 ]
 
     def unassign(self, e, c):
-        self.entities.items[e.id].mask -= c.family
+        self.entities[e.id].mask -= c.family
         e.components[c.family.index] = 0
         self.components[c.family].remove(c)
 
@@ -160,7 +169,7 @@ class EntityManager(object):
             if not e.active or e.dead:
                 continue
             if e.mask & mask == mask:
-                yield e, [self.components[1 << index].items[e.components[uid]]
+                yield e, [self.components[1 << index][uid]
                           for index, uid in enumerate(e.components)
                           if (1 << index) & mask == (1 << index) and e.active and not e.dead]
 
@@ -172,9 +181,7 @@ class EntityManager(object):
             s.update(self, delta)
 
         for e in filter(lambda x: x.id != INVALID_ID, self.entities):
-
-            print(e.active, e.dead)
             if e.dead:
                 self.remove(e)
             elif not e.active:
-                self.entities.items[e.id].active = True
+                self.entities[e.id].active = True
