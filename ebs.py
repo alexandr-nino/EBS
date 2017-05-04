@@ -2,7 +2,7 @@
 import weakref
 
 
-#  makes something like C enum for Family definitions and use in masks
+#  makes something like C enum+std::bitset for Family definitions and use in masks
 class Meta(type):
     def __getattr__(cls, item):
         if item in cls._fields_:
@@ -20,7 +20,7 @@ class Family(Enum):
 
 class Component(object):
     owner = None
-    family = 0  # unused yet
+    family = 0
 
     _instances = None
 
@@ -54,7 +54,7 @@ class Entity(object):
     components = {}
     active = False
     dead = False
-    mask = 0  # unused yet
+    mask = 0
 
     def __init__(self, gm):
         self.gm = gm
